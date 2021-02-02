@@ -52,10 +52,66 @@ public class Timer {
      * @param postFunction a function which consumes a U and which succeeds the call of function, but which is not timed (may be null).
      * @return the average milliseconds per repetition.
      */
-    public <T, U> double repeat(int n, Supplier<T> supplier, Function<T, U> function, UnaryOperator<T> preFunction, Consumer<U> postFunction) {
-        logger.trace("repeat: with " + n + " runs");
-        // TO BE IMPLEMENTED: note that the timer is running when this method is called and should still be running when it returns.
-    }
+	public <T, U> double repeat(int n, Supplier<T> supplier, Function<T, U> function, UnaryOperator<T> preFunction,
+			Consumer<U> postFunction) {
+		logger.trace("repeat: with " + n + " runs");
+
+		// TO BE IMPLEMENTED: note that the timer is running when this method is called
+		// and should still be running when it returns.
+		for (int i = 0; i < n; i++) {
+			pause();
+			if (preFunction != null) {
+				preFunction.apply(supplier.get());
+			}
+			resume();
+			lap();
+			U func = function.apply(supplier.get());
+			pause();
+
+			if (postFunction != null) {
+				postFunction.accept(func);
+			}
+			resume();
+		}
+		pause();
+		return meanLapTime();
+		//aaksh
+
+//        for(int i =0; i<n;i++) {
+//        	if(preFunction != null) {
+//        		preFunction.apply(supplier.get());
+//        	}        	
+//        	pause();
+//        	resume();
+//        	U func = function.apply(supplier.get());
+//        	pauseAndLap();
+//        	if(postFunction != null) {
+//        		postFunction.accept(func);
+//        	}
+//        	resume();
+//        }
+//        return stop();
+		
+		
+//		int i = 0;
+//        while(i < n) {
+//        	lap();
+//        	pause();
+//        	if(null != preFunction) {
+//        		preFunction.apply(supplier.get());
+//        	}
+//        	resume();
+//        	U func = function.apply(supplier.get());
+//        	pause();
+//        	if(postFunction != null) {
+//        		postFunction.accept(func);
+//        	}
+//        	resume();
+//        	i++;        	
+//        }
+//        pause();
+//        return meanLapTime();
+	}
 
     /**
      * Stop this Timer and return the mean lap time in milliseconds.
@@ -173,6 +229,7 @@ public class Timer {
      */
     private static long getClock() {
         // TO BE IMPLEMENTED
+    	return System.nanoTime();
     }
 
     /**
@@ -184,6 +241,7 @@ public class Timer {
      */
     private static double toMillisecs(long ticks) {
         // TO BE IMPLEMENTED
+    	return ticks*Math.pow(10, -6);
     }
 
     final static LazyLogger logger = new LazyLogger(Timer.class);

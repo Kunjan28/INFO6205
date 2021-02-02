@@ -53,8 +53,8 @@ public class InsertionSortTest {
         Integer[] xs = list.toArray(new Integer[0]);
         BaseHelper<Integer> helper = new BaseHelper<>("InsertionSort", xs.length);
         GenericSort<Integer> sorter = new InsertionSort<Integer>(helper);
-        Integer[] ys = sorter.sort(xs);
-        assertTrue(helper.sorted(ys));
+        sorter.sort(xs,0,4);
+        assertTrue(helper.sorted(xs));
         System.out.println(sorter.toString());
     }
 
@@ -83,9 +83,9 @@ public class InsertionSortTest {
         Integer[] xs = helper.random(Integer.class, r -> r.nextInt(1000));
         SortWithHelper<Integer> sorter = new InsertionSort<Integer>(helper);
         sorter.preProcess(xs);
-        Integer[] ys = sorter.sort(xs);
-        assertTrue(helper.sorted(ys));
-        sorter.postProcess(ys);
+         sorter.sort(xs,0,100);
+        assertTrue(helper.sorted(xs));
+        sorter.postProcess(xs);
         final int compares = (int) statPack.getStatistics(InstrumentedHelper.COMPARES).mean();
         // NOTE: these are suppoed to match within about 12%.
         // Since we set a specific seed, this should always succeed.

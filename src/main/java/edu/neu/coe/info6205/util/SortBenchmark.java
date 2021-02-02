@@ -3,28 +3,37 @@
  */
 package edu.neu.coe.info6205.util;
 
-import edu.neu.coe.info6205.sort.BaseHelper;
-import edu.neu.coe.info6205.sort.Helper;
-import edu.neu.coe.info6205.sort.Sort;
-import edu.neu.coe.info6205.sort.SortWithHelper;
-import edu.neu.coe.info6205.sort.simple.TimSort;
-import edu.neu.coe.info6205.sort.simple.*;
+import static edu.neu.coe.info6205.util.SortBenchmarkHelper.generateRandomLocalDateTimeArray;
+import static edu.neu.coe.info6205.util.SortBenchmarkHelper.getWords;
+import static edu.neu.coe.info6205.util.Utilities.formatWhole;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.time.LocalDateTime;
 import java.time.chrono.ChronoLocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Random;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import static edu.neu.coe.info6205.util.SortBenchmarkHelper.generateRandomLocalDateTimeArray;
-import static edu.neu.coe.info6205.util.SortBenchmarkHelper.getWords;
-import static edu.neu.coe.info6205.util.Utilities.formatWhole;
+import edu.neu.coe.info6205.sort.BaseHelper;
+import edu.neu.coe.info6205.sort.GenericSort;
+import edu.neu.coe.info6205.sort.Helper;
+import edu.neu.coe.info6205.sort.Sort;
+import edu.neu.coe.info6205.sort.SortWithHelper;
+import edu.neu.coe.info6205.sort.simple.InsertionSort;
+import edu.neu.coe.info6205.sort.simple.IntroSort;
+import edu.neu.coe.info6205.sort.simple.MergeSortBasic;
+import edu.neu.coe.info6205.sort.simple.QuickSort_3way;
+import edu.neu.coe.info6205.sort.simple.QuickSort_DualPivot;
+import edu.neu.coe.info6205.sort.simple.TimSort;
 
 public class SortBenchmark {
 
@@ -34,12 +43,13 @@ public class SortBenchmark {
 
     public static void main(String[] args) throws IOException {
         Config config = Config.load(SortBenchmark.class);
+        System.out.println("SortBenchmark.main: " + config.get("huskysort", "version") + " with word counts: " + Arrays.toString(args));
         logger.info("SortBenchmark.main: " + config.get("huskysort", "version") + " with word counts: " + Arrays.toString(args));
         if (args.length == 0) logger.warn("No word counts specified on the command line");
         SortBenchmark benchmark = new SortBenchmark(config);
-        benchmark.sortIntegers(100000);
-        benchmark.sortStrings(Arrays.stream(args).map(Integer::parseInt));
-        benchmark.sortLocalDateTimes(100000);
+        benchmark.sortIntegers(100);
+        //benchmark.sortStrings(Arrays.stream(args).map(Integer::parseInt));
+        //benchmark.sortLocalDateTimes(100000);
     }
 
     // CONSIDER generifying common code (but it's difficult if not impossible)
@@ -47,19 +57,22 @@ public class SortBenchmark {
         final Random random = new Random();
 
         // sort int[]
-        final Supplier<int[]> intsSupplier = () -> {
-            int[] result = (int[]) Array.newInstance(int.class, n);
-            for (int i = 0; i < n; i++) result[i] = random.nextInt();
-            return result;
-        };
+//        final Supplier<int[]> intsSupplier = () -> {
+//            int[] result = (int[]) Array.newInstance(int.class, n);
+//            for (int i = 0; i < n; i++) result[i] = random.nextInt();
+//            return result;
+//        };
+//        
+        BaseHelper<Integer> helper = new BaseHelper<>("InsertionSort", n);
+        GenericSort<Integer> sorter = new InsertionSort<Integer>(helper);
 
-        final double t1 = new Benchmark_Timer<int[]>(
-                "intArraysorter",
-                (xs) -> Arrays.copyOf(xs, xs.length),
-                Arrays::sort,
-                null
-        ).runFromSupplier(intsSupplier, 100);
-        for (TimeLogger timeLogger : timeLoggersLinearithmic) timeLogger.log(t1, n);
+//        final double t1 = new Benchmark_Timer<int[]>(
+//                "intArraysorter",
+//                (xs) -> Arrays.copyOf(xs, xs.length),
+//                (xs) -> sorter.sort(xs,0,xs.length),
+//                null
+//        ).runFromSupplier(intsSupplier, 100);
+//        for (TimeLogger timeLogger : timeLoggersLinearithmic) timeLogger.log(t1, n);
 
         // sort Integer[]
         final Supplier<Integer[]> integersSupplier = () -> {
@@ -71,7 +84,7 @@ public class SortBenchmark {
         final double t2 = new Benchmark_Timer<Integer[]>(
                 "integerArraysorter",
                 (xs) -> Arrays.copyOf(xs, xs.length),
-                Arrays::sort,
+                (xs) -> sorter.sort(xs,0,xs.length),
                 null
         ).runFromSupplier(integersSupplier, 100);
         for (TimeLogger timeLogger : timeLoggersLinearithmic) timeLogger.log(t2, n);
@@ -291,6 +304,7 @@ public class SortBenchmark {
             new TimeLogger("Raw time per run (mSec): ", (time, n) -> time),
             new TimeLogger("Normalized time per run (n^2): ", (time, n) -> time / meanInversions(n) / 6 * 1e6)
     };
+ 
 
     private static final Consumer<String[]> DO_NOTHING = (xs2) -> {
         // XXX do nothing.
